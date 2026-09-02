@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TENANT
+  BUYER
+}
+
+enum OrderStatus {
+  PENDING
+  VERIFYING
+  PROCESSING
+  READY
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  REJECTED
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password_hash String
+  name          String
+  role          Role     @default(BUYER)
+  created_at    DateTime @default(now())
+
+  tenant        Tenant?
+  orders        Order[]
+}
+
+model Tenant {
+  id             Int      @id @default(autoincrement())
+  user_id        Int      @unique
+  name           String
+  is_open        Boolean  @default(false)
+  qris_image_url String?
+
+  user           User       @relation(fields: [user_id], references: [id])
+  products       Product[]
+  orders         Order[]
+}
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  tenant_id    Int
+  name         String
+  price        Decimal  @db.Decimal(10, 2)
+  stock        Int      @default(0)
+  image_url    String?
+  is_available Boolean  @default(true)
+
+  tenant       Tenant       @relation(fields: [tenant_id], references: [id])
+  order_items  OrderItem[]
+}
+
+model Order {
+  id           Int         @id @default(autoincrement())
+  user_id      Int
+  tenant_id    Int
+  status       OrderStatus @default(PENDING)
+  total_amount Decimal     @db.Decimal(10, 2)
+  pickup_time  DateTime
+  created_at   DateTime    @default(now())
+
+  user         User        @relation(fields: [user_id], references: [id])
+  tenant       Tenant      @relation(fields: [tenant_id], references: [id])
+  order_items  OrderItem[]
+  payment      Payment?
+}
+
+model OrderItem {
+  id         Int     @id @default(autoincrement())
+  order_id   Int
+  product_id Int
+  quantity   Int
+  subtotal   Decimal @db.Decimal(10, 2)
+
+  order      Order   @relation(fields: [order_id], references: [id])
+  product    Product @relation(fields: [product_id], references: [id])
+}
+
+model Payment {
+  id              Int           @id @default(autoincrement())
+  order_id        Int           @unique
+  amount          Decimal       @db.Decimal(10, 2)
+  proof_image_url String?
+  status          PaymentStatus @default(PENDING)
+
+  order           Order         @relation(fields: [order_id], references: [id])
+}
