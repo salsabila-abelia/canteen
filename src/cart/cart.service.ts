@@ -27,7 +27,9 @@ export class CartService {
   }
 
   async addToCart(userId: number, productId: number, quantity: number) {
-    let cart = await this.prisma.cart.findUnique({ where: { user_id: userId } });
+    let cart = await this.prisma.cart.findUnique({
+      where: { user_id: userId },
+    });
     if (!cart) {
       cart = await this.prisma.cart.create({ data: { user_id: userId } });
     }
@@ -53,7 +55,9 @@ export class CartService {
   }
 
   async removeFromCart(userId: number, itemId: number) {
-    const cart = await this.prisma.cart.findUnique({ where: { user_id: userId } });
+    const cart = await this.prisma.cart.findUnique({
+      where: { user_id: userId },
+    });
     if (!cart) throw new NotFoundException('Cart not found');
 
     const item = await this.prisma.cartItem.findFirst({
@@ -65,7 +69,9 @@ export class CartService {
   }
 
   async clearCart(userId: number) {
-    const cart = await this.prisma.cart.findUnique({ where: { user_id: userId } });
+    const cart = await this.prisma.cart.findUnique({
+      where: { user_id: userId },
+    });
     if (!cart) return { count: 0 };
     return this.prisma.cartItem.deleteMany({ where: { cart_id: cart.id } });
   }

@@ -1,0 +1,756 @@
+{
+  "info": {
+    "_postman_id": "e-kantin-api-collection",
+    "name": "E-Kantin API",
+    "description": "Koleksi Postman lengkap untuk E-Kantin Backend API.\n\n## Cara Penggunaan\n1. Import collection ini ke Postman\n2. Set variabel `base_url` ke `http://localhost:3000`\n3. Jalankan `POST /api/auth/login` dengan kredensial yang sesuai\n4. Token akan tersimpan otomatis di variabel `access_token`\n5. Semua request berikutnya sudah siap digunakan\n\n## Akun Default (setelah `prisma db seed`)\n- Admin: `admin@canteen.com` / `password123`\n- Kantin: `kantin1@canteen.com` / `password123`\n- Siswa: `siswa1@canteen.com` / `password123`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "order_id", "value": "1", "type": "string" },
+    { "key": "product_id", "value": "1", "type": "string" },
+    { "key": "tenant_id", "value": "1", "type": "string" },
+    { "key": "pickup_code", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "description": "Login, Register. Register hanya bisa dilakukan oleh Admin.",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.access_token) {",
+                  "  pm.collectionVariables.set('access_token', res.access_token);",
+                  "  console.log('Token saved:', res.access_token.substring(0,30) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@canteen.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+            "description": "Login sebagai Super Admin. Token disimpan otomatis ke variabel `access_token`."
+          }
+        },
+        {
+          "name": "Login (Kantin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.access_token) {",
+                  "  pm.collectionVariables.set('access_token', res.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"kantin1@canteen.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+            "description": "Login sebagai Admin Kantin."
+          }
+        },
+        {
+          "name": "Login (Siswa/Buyer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.access_token) {",
+                  "  pm.collectionVariables.set('access_token', res.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"siswa1@canteen.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+            "description": "Login sebagai Siswa/Guru (Buyer)."
+          }
+        },
+        {
+          "name": "Register Akun Baru (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"siswa_baru@canteen.com\",\n  \"password\": \"password123\",\n  \"name\": \"Siswa Baru\",\n  \"role\": \"BUYER\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api", "auth", "register"] },
+            "description": "Daftarkan akun baru. Hanya bisa dilakukan oleh Super Admin. Role: ADMIN, TENANT, BUYER. Jika role=TENANT, profil kantin dibuat otomatis."
+          }
+        },
+        {
+          "name": "Register Akun Kantin (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"kantin_baru@canteen.com\",\n  \"password\": \"password123\",\n  \"name\": \"Kantin Bu Dewi\",\n  \"role\": \"TENANT\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api", "auth", "register"] },
+            "description": "Register khusus untuk membuat akun Kantin baru. Profil tenant dibuat otomatis."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏪 Tenants (Kantin)",
+      "description": "Manajemen kantin – list, QRIS, peringatan, dan pendapatan.",
+      "item": [
+        {
+          "name": "Lihat Semua Kantin",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tenants",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tenants"]
+            },
+            "description": "Menampilkan semua kantin. Endpoint publik, tidak perlu login."
+          }
+        },
+        {
+          "name": "Lihat Kantin yang Sedang Buka",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tenants?is_open=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tenants"],
+              "query": [{ "key": "is_open", "value": "true" }]
+            },
+            "description": "Filter hanya menampilkan kantin yang sedang buka."
+          }
+        },
+        {
+          "name": "Upload QRIS Kantin (Tenant Only)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}" }] },
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Gambar QRIS kantin (jpg/png)"
+                }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/tenants/qris", "host": ["{{base_url}}"], "path": ["api", "tenants", "qris"] },
+            "description": "Login dulu sebagai Kantin, lalu upload gambar QRIS. Gambar ini ditampilkan ke buyer saat checkout."
+          }
+        },
+        {
+          "name": "Beri Peringatan ke Kantin (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Kantin Anda mendapatkan laporan keluhan terkait kebersihan. Harap segera diperbaiki.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tenants/{{tenant_id}}/warn",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tenants", "{{tenant_id}}", "warn"]
+            },
+            "description": "Admin memberikan peringatan ke kantin. Setelah 3 peringatan, kantin otomatis disuspensi."
+          }
+        },
+        {
+          "name": "Lihat Total Pendapatan (Tenant Only)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/tenants/income", "host": ["{{base_url}}"], "path": ["api", "tenants", "income"] },
+            "description": "Login sebagai Kantin. Menampilkan total pendapatan dari semua order COMPLETED."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🍱 Products (Menu)",
+      "description": "CRUD menu produk kantin. Hanya bisa dikelola oleh Tenant.",
+      "item": [
+        {
+          "name": "Tambah Produk Baru (Tenant Only)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Ayam Geprek Spesial", "type": "text" },
+                { "key": "price", "value": "18000", "type": "text" },
+                { "key": "stock", "value": "30", "type": "text" },
+                { "key": "is_available", "value": "true", "type": "text" },
+                { "key": "file", "type": "file", "description": "Gambar produk (opsional)" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/api/products", "host": ["{{base_url}}"], "path": ["api", "products"] },
+            "description": "Login sebagai Kantin. Produk otomatis dikaitkan ke kantin yang login. Gambar opsional."
+          }
+        },
+        {
+          "name": "Update Stok & Ketersediaan (Tenant Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock\": 25,\n  \"is_available\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "{{product_id}}"]
+            },
+            "description": "Update stok atau sembunyikan produk sementara (is_available: false). Hanya produk milik kantin sendiri."
+          }
+        },
+        {
+          "name": "Sembunyikan Produk Habis (Tenant Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock\": 0,\n  \"is_available\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "{{product_id}}"]
+            },
+            "description": "Tandai produk sebagai habis / tidak tersedia tanpa harus menghapusnya."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛒 Cart (Keranjang)",
+      "description": "Manajemen keranjang belanja. Hanya untuk Buyer.",
+      "item": [
+        {
+          "name": "Lihat Isi Keranjang",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/cart", "host": ["{{base_url}}"], "path": ["api", "cart"] },
+            "description": "Login sebagai Buyer. Menampilkan semua item di keranjang beserta detail produk."
+          }
+        },
+        {
+          "name": "Tambah Item ke Keranjang",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 1,\n  \"quantity\": 2\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/cart", "host": ["{{base_url}}"], "path": ["api", "cart"] },
+            "description": "Tambahkan produk ke keranjang. Jika produk sudah ada, kuantitas bertambah."
+          }
+        },
+        {
+          "name": "Hapus Item dari Keranjang",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/cart/5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart", "5"]
+            },
+            "description": "Hapus satu item dari keranjang. Ganti `5` dengan ID item keranjang (cart_items.id)."
+          }
+        },
+        {
+          "name": "Kosongkan Keranjang",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/cart", "host": ["{{base_url}}"], "path": ["api", "cart"] },
+            "description": "Hapus semua item dari keranjang sekaligus."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Orders (Pesanan)",
+      "description": "Alur lengkap pemesanan: Buat order → Upload bukti → Kantin verifikasi → Proses → READY → Scan QR → COMPLETE",
+      "item": [
+        {
+          "name": "🟦 [BUYER] Buat Pesanan Baru (QRIS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.id) {",
+                  "  pm.collectionVariables.set('order_id', res.id);",
+                  "  console.log('Order ID saved:', res.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": 1,\n  \"items\": [\n    { \"productId\": 1, \"quantity\": 2 },\n    { \"productId\": 2, \"quantity\": 1 }\n  ],\n  \"pickup_time\": \"{{$isoTimestamp}}\",\n  \"notes\": \"Sambalnya dipisah ya kak\",\n  \"payment_method\": \"QRIS\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "description": "Login sebagai Buyer. Buat pesanan baru dengan QRIS. pickup_time HARUS hari ini dan dalam jam buka kantin (07:00-15:00). ID order tersimpan otomatis ke variabel."
+          }
+        },
+        {
+          "name": "🟦 [BUYER] Buat Pesanan (CASH)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.id) { pm.collectionVariables.set('order_id', res.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": 1,\n  \"items\": [\n    { \"productId\": 1, \"quantity\": 1 }\n  ],\n  \"pickup_time\": \"{{$isoTimestamp}}\",\n  \"payment_method\": \"CASH\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "description": "Buat pesanan dengan metode CASH. Status langsung PROCESSING (skip tahap verifikasi pembayaran)."
+          }
+        },
+        {
+          "name": "🟦 [BUYER] Buat Pesanan dengan Promo",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": 1,\n  \"items\": [\n    { \"productId\": 1, \"quantity\": 3 }\n  ],\n  \"pickup_time\": \"{{$isoTimestamp}}\",\n  \"payment_method\": \"QRIS\",\n  \"promo_id\": 1\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "description": "Buat pesanan dengan menggunakan kode promo. Ganti promo_id sesuai ID promo yang berlaku."
+          }
+        },
+        {
+          "name": "🟦 [BUYER] Upload Bukti Pembayaran QRIS",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "description": "Screenshot/foto bukti transfer QRIS"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/payment-proof",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "payment-proof"]
+            },
+            "description": "Setelah buat pesanan QRIS (status PENDING), upload screenshot bukti pembayaran. Status berubah ke VERIFYING dan kantin mendapat notifikasi."
+          }
+        },
+        {
+          "name": "🟦 [BUYER] Batalkan Pesanan",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "cancel"]
+            },
+            "description": "Batalkan pesanan saat masih PENDING atau VERIFYING. Akan GAGAL jika sudah PROCESSING (kantin sudah masak)."
+          }
+        },
+        {
+          "name": "🟧 [TENANT] Verifikasi Pembayaran - TERIMA",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_valid\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/verify-payment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "verify-payment"]
+            },
+            "description": "Login sebagai Kantin. Terima bukti pembayaran → Status VERIFYING → PROCESSING."
+          }
+        },
+        {
+          "name": "🟧 [TENANT] Verifikasi Pembayaran - TOLAK",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_valid\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/verify-payment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "verify-payment"]
+            },
+            "description": "Tolak pembayaran → Status VERIFYING → CANCELED, stok dikembalikan."
+          }
+        },
+        {
+          "name": "🟧 [TENANT] Update Status ke READY",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.pickup_code) {",
+                  "  pm.collectionVariables.set('pickup_code', res.pickup_code);",
+                  "  console.log('Pickup code saved:', res.pickup_code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"READY\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "status"]
+            },
+            "description": "Login sebagai Kantin. Tandai pesanan sudah siap diambil. QR pickup_code digenerate otomatis dan disimpan ke variabel."
+          }
+        },
+        {
+          "name": "🟧 [TENANT] Scan QR Code Pickup",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup_code\": \"{{pickup_code}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/orders/scan-pickup", "host": ["{{base_url}}"], "path": ["api", "orders", "scan-pickup"] },
+            "description": "Scan QR code buyer untuk menyelesaikan pengambilan. Status → COMPLETED. Gagal jika kode bukan milik kantin ini atau pesanan belum READY."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎟️ Promo",
+      "description": "CRUD kode diskon. Hanya bisa dikelola oleh Super Admin.",
+      "item": [
+        {
+          "name": "Buat Promo PERCENTAGE",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"BACK2SCHOOL10\",\n  \"type\": \"PERCENTAGE\",\n  \"value\": 10,\n  \"valid_until\": \"2026-12-31T23:59:59.000Z\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/promo", "host": ["{{base_url}}"], "path": ["api", "promo"] },
+            "description": "Buat promo diskon 10% berlaku hingga akhir tahun."
+          }
+        },
+        {
+          "name": "Buat Promo FIXED",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"GRATIS5RB\",\n  \"type\": \"FIXED\",\n  \"value\": 5000,\n  \"valid_until\": \"2026-10-31T23:59:59.000Z\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/promo", "host": ["{{base_url}}"], "path": ["api", "promo"] },
+            "description": "Buat promo potongan Rp5.000 flat."
+          }
+        },
+        {
+          "name": "Lihat Semua Promo",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/promo", "host": ["{{base_url}}"], "path": ["api", "promo"] }
+          }
+        },
+        {
+          "name": "Detail Promo",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/promo/1", "host": ["{{base_url}}"], "path": ["api", "promo", "1"] }
+          }
+        },
+        {
+          "name": "Update Promo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 15,\n  \"valid_until\": \"2027-01-31T23:59:59.000Z\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/promo/1", "host": ["{{base_url}}"], "path": ["api", "promo", "1"] }
+          }
+        },
+        {
+          "name": "Hapus Promo",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/promo/1", "host": ["{{base_url}}"], "path": ["api", "promo", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⭐ Review (Ulasan)",
+      "description": "Rating dan feedback pesanan yang sudah selesai.",
+      "item": [
+        {
+          "name": "Buat Ulasan (Buyer Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Ayam gepreknya enak banget, porsinya besar dan sambalnya nampol!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/review/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "review", "{{order_id}}"]
+            },
+            "description": "Login sebagai Buyer. Beri rating 1-5 dan komentar untuk pesanan yang COMPLETED."
+          }
+        },
+        {
+          "name": "Lihat Semua Ulasan Kantin (Tenant Only)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/api/review/tenant", "host": ["{{base_url}}"], "path": ["api", "review", "tenant"] },
+            "description": "Login sebagai Kantin. Lihat semua review yang masuk untuk kantin Anda."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔬 Skenario Uji (Test Scenarios)",
+      "description": "Kumpulan request untuk menguji edge case dan validasi bisnis.",
+      "item": [
+        {
+          "name": "❌ Cancel saat PROCESSING (Harus Gagal)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "cancel"]
+            },
+            "description": "Harus return 400: Pesanan tidak dapat dibatalkan karena sudah diproses oleh kantin"
+          }
+        },
+        {
+          "name": "❌ Pickup Code Kantin Lain (Harus Gagal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup_code\": \"XYZABC\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/orders/scan-pickup", "host": ["{{base_url}}"], "path": ["api", "orders", "scan-pickup"] },
+            "description": "Scan kode pickup milik kantin lain. Harus return 400: This order does not belong to your canteen"
+          }
+        },
+        {
+          "name": "❌ Order di Luar Jam Kantin (Harus Gagal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": 1,\n  \"items\": [{ \"productId\": 1, \"quantity\": 1 }],\n  \"pickup_time\": \"2026-09-03T23:00:00.000Z\",\n  \"payment_method\": \"QRIS\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "description": "Order dengan pickup_time jam 23:00 saat kantin tutup jam 15:00. Harus return 400."
+          }
+        },
+        {
+          "name": "❌ Order untuk Besok (Harus Gagal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": 1,\n  \"items\": [{ \"productId\": 1, \"quantity\": 1 }],\n  \"pickup_time\": \"2027-01-01T10:00:00.000Z\",\n  \"payment_method\": \"QRIS\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "description": "Harus return 400: Pengambilan pesanan hanya bisa dilakukan pada hari ini"
+          }
+        },
+        {
+          "name": "❌ Promo Kadaluarsa (Harus Gagal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": 1,\n  \"items\": [{ \"productId\": 1, \"quantity\": 1 }],\n  \"pickup_time\": \"{{$isoTimestamp}}\",\n  \"payment_method\": \"QRIS\",\n  \"promo_id\": 999\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "description": "Order dengan promo_id yang tidak ada. Harus return 400: Invalid or expired promo"
+          }
+        },
+        {
+          "name": "❌ Login Salah Password (Harus Gagal)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@canteen.com\",\n  \"password\": \"salah_password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] },
+            "description": "Harus return 401: Invalid credentials"
+          }
+        }
+      ]
+    }
+  ]
+}

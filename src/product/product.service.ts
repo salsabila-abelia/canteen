@@ -6,7 +6,9 @@ export class ProductService {
   constructor(private prisma: PrismaService) {}
 
   async createProduct(userId: number, data: any, filename?: string) {
-    const tenant = await this.prisma.tenant.findUnique({ where: { user_id: userId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { user_id: userId },
+    });
     if (!tenant) throw new NotFoundException('Tenant not found');
 
     return this.prisma.product.create({
@@ -20,11 +22,20 @@ export class ProductService {
     });
   }
 
-  async updateStock(userId: number, productId: number, stock: number, isAvailable: boolean) {
-    const tenant = await this.prisma.tenant.findUnique({ where: { user_id: userId } });
+  async updateStock(
+    userId: number,
+    productId: number,
+    stock: number,
+    isAvailable: boolean,
+  ) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { user_id: userId },
+    });
     if (!tenant) throw new NotFoundException('Tenant not found');
 
-    const product = await this.prisma.product.findUnique({ where: { id: productId } });
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
     if (!product || product.tenant_id !== tenant.id) {
       throw new NotFoundException('Product not found or not owned by you');
     }

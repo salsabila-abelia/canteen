@@ -5,7 +5,7 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
   MessageBody,
-  ConnectedSocket
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
@@ -26,7 +26,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('joinRoom')
-  handleJoinRoom(@MessageBody() data: { role: string; id: number }, @ConnectedSocket() client: Socket) {
+  handleJoinRoom(
+    @MessageBody() data: { role: string; id: number },
+    @ConnectedSocket() client: Socket,
+  ) {
     const roomName = `room:${data.role}_${data.id}`;
     client.join(roomName);
     this.logger.log(`Client ${client.id} joined ${roomName}`);
@@ -34,10 +37,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   emitPaymentUploaded(tenantId: number, orderId: number) {
-    this.server.to(`room:tenant_${tenantId}`).emit('payment.uploaded', { orderId });
+    this.server
+      .to(`room:tenant_${tenantId}`)
+      .emit('payment.uploaded', { orderId });
   }
 
   emitOrderUpdated(userId: number, orderId: number, status: string) {
-    this.server.to(`room:user_${userId}`).emit('order.updated', { orderId, status });
+    this.server
+      .to(`room:user_${userId}`)
+      .emit('order.updated', { orderId, status });
   }
 }

@@ -20,6 +20,7 @@ enum OrderStatus {
   READY
   COMPLETED
   CANCELED
+  EXPIRED
 }
 
 enum PaymentStatus {
@@ -57,6 +58,8 @@ model Tenant {
   user_id        Int      @unique
   name           String
   is_open        Boolean  @default(false)
+  open_time      String   @default("07:00")
+  close_time     String   @default("15:00")
   qris_image_url String?
   is_suspended   Boolean    @default(false)
 

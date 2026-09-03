@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -8,19 +8,20 @@ import { Role } from '@prisma/client';
 export class AuthService {
   constructor(
     private usersService: UsersService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
-    if (user && await bcrypt.compare(pass, user.password_hash)) {
+    if (user && (await bcrypt.compare(pass, user.password_hash))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password_hash, ...result } = user;
       return result;
     }
     return null;
   }
 
-  async login(user: any) {
+  login(user: any) {
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
@@ -39,13 +40,15 @@ export class AuthService {
       name: data.name,
       password_hash: hashed,
       role: roleToCreate,
-      ...(roleToCreate === Role.TENANT ? {
-        tenant: {
-          create: {
-            name: data.name, // Gunakan nama user sebagai nama tenant default
+      ...(roleToCreate === Role.TENANT
+        ? {
+            tenant: {
+              create: {
+                name: data.name, // Gunakan nama user sebagai nama tenant default
+              },
+            },
           }
-        }
-      } : {})
+        : {}),
     });
     return this.login(user);
   }
