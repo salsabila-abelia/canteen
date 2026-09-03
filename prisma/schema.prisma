@@ -28,6 +28,16 @@ enum PaymentStatus {
   REJECTED
 }
 
+enum PaymentMethod {
+  CASH
+  QRIS
+}
+
+enum PromoType {
+  FIXED
+  PERCENTAGE
+}
+
 model User {
   id            Int      @id @default(autoincrement())
   email         String   @unique
@@ -38,6 +48,8 @@ model User {
 
   tenant        Tenant?
   orders        Order[]
+  cart          Cart?
+  reviews       Review[]
 }
 
 model Tenant {
@@ -46,10 +58,13 @@ model Tenant {
   name           String
   is_open        Boolean  @default(false)
   qris_image_url String?
+  is_suspended   Boolean    @default(false)
 
-  user           User       @relation(fields: [user_id], references: [id])
+  user           User            @relation(fields: [user_id], references: [id])
   products       Product[]
   orders         Order[]
+  warnings       TenantWarning[]
+  reviews        Review[]
 }
 
 model Product {
@@ -63,6 +78,7 @@ model Product {
 
   tenant       Tenant       @relation(fields: [tenant_id], references: [id])
   order_items  OrderItem[]
+  cart_items   CartItem[]
 }
 
 model Order {
@@ -71,13 +87,19 @@ model Order {
   tenant_id    Int
   status       OrderStatus @default(PENDING)
   total_amount Decimal     @db.Decimal(10, 2)
-  pickup_time  DateTime
-  created_at   DateTime    @default(now())
+  pickup_time    DateTime
+  created_at     DateTime      @default(now())
+  notes          String?
+  pickup_code    String?       @unique
+  payment_method PaymentMethod @default(QRIS)
+  promo_id       Int?
 
   user         User        @relation(fields: [user_id], references: [id])
   tenant       Tenant      @relation(fields: [tenant_id], references: [id])
   order_items  OrderItem[]
   payment      Payment?
+  promo        Promo?      @relation(fields: [promo_id], references: [id])
+  review       Review?
 }
 
 model OrderItem {
@@ -99,4 +121,58 @@ model Payment {
   status          PaymentStatus @default(PENDING)
 
   order           Order         @relation(fields: [order_id], references: [id])
+}
+
+model Promo {
+  id           Int       @id @default(autoincrement())
+  code         String    @unique
+  type         PromoType
+  value        Decimal   @db.Decimal(10, 2)
+  valid_until  DateTime
+  created_at   DateTime  @default(now())
+  
+  orders       Order[]
+}
+
+model Cart {
+  id         Int        @id @default(autoincrement())
+  user_id    Int        @unique
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+
+  user       User       @relation(fields: [user_id], references: [id])
+  cart_items CartItem[]
+}
+
+model CartItem {
+  id         Int      @id @default(autoincrement())
+  cart_id    Int
+  product_id Int
+  quantity   Int
+
+  cart       Cart     @relation(fields: [cart_id], references: [id])
+  product    Product  @relation(fields: [product_id], references: [id])
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  order_id   Int      @unique
+  user_id    Int
+  tenant_id  Int
+  rating     Int
+  comment    String?
+  created_at DateTime @default(now())
+
+  order      Order    @relation(fields: [order_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
+  tenant     Tenant   @relation(fields: [tenant_id], references: [id])
+}
+
+model TenantWarning {
+  id         Int      @id @default(autoincrement())
+  tenant_id  Int
+  message    String
+  created_at DateTime @default(now())
+
+  tenant     Tenant   @relation(fields: [tenant_id], references: [id])
 }

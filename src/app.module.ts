@@ -12,6 +12,9 @@ import { OrdersModule } from './orders/orders.module';
 import { EventsModule } from './events/events.module';
 import { CronModule } from './cron/cron.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { PromoModule } from './promo/promo.module';
+import { CartModule } from './cart/cart.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { ScheduleModule } from '@nestjs/schedule';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
+    PromoModule,
+    CartModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],

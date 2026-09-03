@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Query, UseGuards, UseInterceptors, UploadedFile, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Query, Param, Body, UseGuards, UseInterceptors, UploadedFile, Request } from '@nestjs/common';
 import { TenantService } from './tenant.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -34,5 +34,19 @@ export class TenantController {
   }))
   async updateQris(@Request() req, @UploadedFile() file: Express.Multer.File) {
     return this.tenantService.updateQris(req.user.id, file.filename);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Post(':id/warn')
+  warnTenant(@Param('id') id: string, @Body('message') message: string) {
+    return this.tenantService.warnTenant(+id, message);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.TENANT)
+  @Get('income')
+  getIncome(@Request() req: any) {
+    return this.tenantService.getIncome(req.user.id);
   }
 }

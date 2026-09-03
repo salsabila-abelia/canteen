@@ -23,4 +23,37 @@ export class TenantService {
       data: { qris_image_url: `/uploads/${filename}` },
     });
   }
+
+  async warnTenant(tenantId: number, message: string) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId }, include: { warnings: true } });
+    if (!tenant) throw new NotFoundException('Tenant not found');
+
+    const warning = await this.prisma.tenantWarning.create({
+      data: { tenant_id: tenantId, message }
+    });
+
+    if (tenant.warnings.length + 1 >= 3 && !tenant.is_suspended) {
+      await this.prisma.tenant.update({
+        where: { id: tenantId },
+        data: { is_suspended: true }
+      });
+    }
+
+    return warning;
+  }
+
+  async getIncome(userId: number) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { user_id: userId } });
+    if (!tenant) throw new NotFoundException('Tenant not found');
+
+    const result = await this.prisma.order.aggregate({
+      _sum: { total_amount: true },
+      where: {
+        tenant_id: tenant.id,
+        status: 'COMPLETED'
+      }
+    });
+
+    return { total_income: result._sum.total_amount || 0 };
+  }
 }
