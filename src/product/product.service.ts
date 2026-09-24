@@ -48,4 +48,9 @@ export class ProductService {
       },
     });
   }
+  async getProducts(tenantId?: number) {
+    return this.prisma.product.findMany({
+      where: tenantId ? { tenant_id: tenantId, is_available: true } : { is_available: true },
+    });
+  }
 }

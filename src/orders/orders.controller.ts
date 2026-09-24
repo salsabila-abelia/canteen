@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Patch,
+  Get,
   Param,
   Body,
   UseGuards,
@@ -299,5 +300,26 @@ Saat status diubah ke READY, sistem otomatis generate **pickup_code** (kode QR 6
   @ApiResponse({ status: 400, description: 'Kode tidak valid / pesanan bukan milik kantin ini / belum READY' })
   async scanPickup(@Request() req, @Body('pickup_code') pickupCode: string) {
     return this.ordersService.scanPickup(req.user.id, pickupCode);
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Daftar Pesanan',
+    description: 'Jika login sebagai BUYER, mengembalikan riwayat pesanannya. Jika login sebagai TENANT, mengembalikan daftar pesanan kantinnya.',
+  })
+  @ApiResponse({ status: 200, description: 'Daftar pesanan' })
+  async getOrders(@Request() req) {
+    return this.ordersService.getOrders(req.user.id, req.user.role);
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Detail Pesanan',
+    description: 'Mengambil detail pesanan tunggal beserta status pembayarannya.',
+  })
+  @ApiParam({ name: 'id', description: 'ID pesanan', example: 10 })
+  @ApiResponse({ status: 200, description: 'Detail pesanan' })
+  async getOrderById(@Request() req, @Param('id') id: string) {
+    return this.ordersService.getOrderById(req.user.id, req.user.role, parseInt(id, 10));
   }
 }

@@ -1,9 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const config = new DocumentBuilder()
     .setTitle('E-Kantin API')
@@ -42,7 +46,7 @@ Login → Tambah ke Keranjang → Checkout (createOrder) → Upload Bukti Bayar 
 | \`EXPIRED\` | Hangus – tidak diambil hingga kantin tutup |`,
     )
     .setVersion('1.0')
-    .addTag('Auth', 'Login & Register akun (hanya Admin yang bisa register)')
+    .addTag('Auth', 'Login & Register akun')
     .addTag('Tenants', 'Data kantin, QRIS, peringatan, dan pendapatan')
     .addTag('Products', 'Menu produk kantin (CRUD oleh Tenant)')
     .addTag('Cart', 'Keranjang belanja Buyer')

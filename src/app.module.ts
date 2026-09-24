@@ -15,6 +15,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { PromoModule } from './promo/promo.module';
 import { CartModule } from './cart/cart.module';
 import { ReviewModule } from './review/review.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ReviewModule } from './review/review.module';
     PromoModule,
     CartModule,
     ReviewModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

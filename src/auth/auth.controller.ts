@@ -1,11 +1,14 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   HttpCode,
   HttpStatus,
   UnauthorizedException,
+  BadRequestException,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -25,14 +28,48 @@ import {
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Post('register')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  @Post('register')
   @ApiBearerAuth('access-token')
   @ApiOperation({
-    summary: 'Register akun baru (Admin Only)',
+    summary: 'Register akun baru (Tenant / Admin) - Hanya Admin',
     description:
-      'Hanya Super Admin yang dapat mendaftarkan akun baru. Role yang tersedia: ADMIN, TENANT, BUYER. Jika role = TENANT, profil kantin akan dibuat otomatis.',
+      'Dapat mendaftarkan akun baru. Role yang tersedia: TENANT (Pemilik Kantin), ADMIN. Hanya ADMIN yang bisa mendaftarkan TENANT.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['email', 'password', 'name', 'role'],
+      properties: {
+        email: { type: 'string', example: 'tenant1@canteen.com' },
+        password: { type: 'string', example: 'password123' },
+        name: { type: 'string', example: 'Kantin Bu Tin' },
+        role: {
+          type: 'string',
+          enum: ['TENANT', 'ADMIN'],
+          example: 'TENANT',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Akun berhasil dibuat',
+  })
+  @ApiResponse({ status: 400, description: 'Email sudah terdaftar atau role tidak valid' })
+  async register(@Body() body: any) {
+    if (body.role === Role.BUYER) {
+      throw new BadRequestException('Use /register-buyer for BUYER registration');
+    }
+    return this.authService.register(body);
+  }
+
+  @Post('register-buyer')
+  @ApiOperation({
+    summary: 'Register akun mandiri untuk Buyer (Siswa)',
+    description:
+      'Pendaftaran mandiri khusus untuk Buyer (Siswa). Role otomatis di-set ke BUYER.',
   })
   @ApiBody({
     schema: {
@@ -42,12 +79,6 @@ export class AuthController {
         email: { type: 'string', example: 'siswa1@canteen.com' },
         password: { type: 'string', example: 'password123' },
         name: { type: 'string', example: 'Budi Santoso' },
-        role: {
-          type: 'string',
-          enum: ['ADMIN', 'TENANT', 'BUYER'],
-          example: 'BUYER',
-          description: 'Default: BUYER',
-        },
       },
     },
   })
@@ -64,8 +95,8 @@ export class AuthController {
     },
   })
   @ApiResponse({ status: 400, description: 'Email sudah terdaftar' })
-  @ApiResponse({ status: 401, description: 'Unauthorized – bukan Admin' })
-  async register(@Body() body: any) {
+  async registerBuyer(@Body() body: any) {
+    body.role = Role.BUYER;
     return this.authService.register(body);
   }
 
@@ -105,5 +136,20 @@ export class AuthController {
       throw new UnauthorizedException('Invalid credentials');
     }
     return this.authService.login(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Ambil profil user aktif setelah login',
+    description: 'Mendapatkan data user saat ini berdasarkan token JWT.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profil user',
+  })
+  async getMe(@Request() req) {
+    return req.user;
   }
 }

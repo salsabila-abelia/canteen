@@ -44,8 +44,10 @@ model User {
   email         String   @unique
   password_hash String
   name          String
-  role          Role     @default(BUYER)
-  created_at    DateTime @default(now())
+  role             Role     @default(BUYER)
+  cash_strike      Int      @default(0)
+  is_cash_banned   Boolean  @default(false)
+  created_at       DateTime @default(now())
 
   tenant        Tenant?
   orders        Order[]

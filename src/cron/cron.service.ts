@@ -67,10 +67,28 @@ export class CronService {
     });
 
     for (const order of forgottenOrders) {
-      await this.prisma.order.update({
-        where: { id: order.id },
-        data: { status: OrderStatus.EXPIRED },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: OrderStatus.EXPIRED },
+        });
+
+        if (order.payment_method === 'CASH') {
+          const user = await tx.user.findUnique({ where: { id: order.user_id } });
+          if (user) {
+            const newStrike = user.cash_strike + 1;
+            await tx.user.update({
+              where: { id: order.user_id },
+              data: {
+                cash_strike: newStrike,
+                is_cash_banned: newStrike >= 3,
+              },
+            });
+            this.logger.log(`User ${user.id} cash strike incremented to ${newStrike}`);
+          }
+        }
       });
+      
       this.events.emitOrderUpdated(
         order.user_id,
         order.id,

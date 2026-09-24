@@ -35,6 +35,11 @@ export class OrdersService {
       if (!tenant.is_open || tenant.is_suspended)
         throw new BadRequestException('Kantin sedang tutup atau ditangguhkan');
 
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (paymentMethod === PaymentMethod.CASH && user?.is_cash_banned) {
+        throw new BadRequestException('Opsi bayar tunai dinonaktifkan untuk akun Anda karena terlalu banyak pelanggaran pesanan CASH sebelumnya');
+      }
+
       const pickupDate = new Date(pickupTime);
       const today = new Date();
       if (pickupDate.toDateString() !== today.toDateString()) {
@@ -350,5 +355,48 @@ export class OrdersService {
       OrderStatus.COMPLETED,
     );
     return updatedOrder;
+  }
+  async getOrders(userId: number, role: string) {
+    if (role === 'TENANT') {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { user_id: userId },
+      });
+      if (!tenant) throw new NotFoundException('Tenant not found');
+      return this.prisma.order.findMany({
+        where: { tenant_id: tenant.id },
+        include: { payment: true, order_items: { include: { product: true } } },
+        orderBy: { created_at: 'desc' },
+      });
+    } else {
+      return this.prisma.order.findMany({
+        where: { user_id: userId },
+        include: { payment: true, tenant: true, order_items: { include: { product: true } } },
+        orderBy: { created_at: 'desc' },
+      });
+    }
+  }
+
+  async getOrderById(userId: number, role: string, orderId: number) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { payment: true, tenant: true, order_items: { include: { product: true } } },
+    });
+
+    if (!order) throw new NotFoundException('Order not found');
+
+    if (role === 'TENANT') {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { user_id: userId },
+      });
+      if (!tenant || order.tenant_id !== tenant.id) {
+        throw new NotFoundException('Order not found or not owned by you');
+      }
+    } else {
+      if (order.user_id !== userId) {
+        throw new NotFoundException('Order not found or not owned by you');
+      }
+    }
+
+    return order;
   }
 }

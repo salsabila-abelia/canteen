@@ -2,7 +2,9 @@ import {
   Controller,
   Post,
   Patch,
+  Get,
   Param,
+  Query,
   Body,
   UseGuards,
   UseInterceptors,
@@ -126,5 +128,15 @@ export class ProductController {
       body.stock,
       body.is_available,
     );
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Dapatkan daftar produk (Publik/All Roles)',
+    description: 'Bisa difilter berdasarkan tenantId (Kantin)',
+  })
+  @ApiResponse({ status: 200, description: 'Daftar produk' })
+  async getProducts(@Query('tenantId') tenantId?: string) {
+    return this.productService.getProducts(tenantId ? parseInt(tenantId, 10) : undefined);
   }
 }
